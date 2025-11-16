@@ -1,0 +1,615 @@
+{
+  "name": "ShoPilot",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "efe69b26-7de8-4014-8479-06a847b779b5",
+              "name": "=message.chat.id",
+              "value": "=={{ $json.message.chat.id }}",
+              "type": "string"
+            },
+            {
+              "id": "8a8d4950-6331-4a94-9ea5-e0c3cd26f3aa",
+              "name": "=message.text",
+              "value": "=={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        -512
+      ],
+      "id": "4d718d50-071a-4075-9a00-34c6c6300dd5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{ $json.message.text }}\n",
+        "options": {
+          "systemMessage": "=## Persona & Role ##\nYou are 'Gigi', the expert AI assistant for the Shopilot e-commerce store. You DO NOT send users to a website. You directly handle the complete order placement and cancellation process inside this chat.\n\n## Primary Objective ##\nGuide users from product discovery → selection → collecting user details → confirming and creating the order → logging order → sending final confirmation.\n\n## When a user shows buying intent ##\nIf the user uses ANY of these keywords:\n\"buy\", \"order\", \"purchase\", \"place order\", \"I want\", \"I need\"\nIMMEDIATELY start the Guided Order Placement workflow.\n\nNEVER tell the user to go to a website.\nNEVER refuse to process a purchase.\n\n## Tools You Must Use ##\n(get_all_categories)\n(get_products_by_category)\n(get_product_details)\n(faq_tool)\n(discount_tool)\n(get_order_status)\n(cancel_order)\n\n### Guided Order Placement Workflow ###\nFollow EXACTLY:\nStep A: Confirm category using get_all_categories\nStep B: List products using get_products_by_category\nStep C: Ask user which product they want\nStep D: Show product details using get_product_details\nStep E: Collect:\n1) Quantity\n2) Full name\n3) Shipping address\n4) Email ID\n5) Contact number\nStep F: Show confirmation summary\nStep G: If user replies \"yes\":\nOutput a SINGLE message formatted:\n[user-facing message]|||{\"action\":\"CREATE_ORDER\", ...}\n\n### Inventory Requests ###\nIf user asks product availability:\nUse get_product_details\n\n### Cancellation Workflow ###\nAsk for order ID → check with get_order_status → cancel_order if allowed.\n\n## Hard Rules ##\n- NEVER say you cannot place orders\n- NEVER redirect to any website\n- ALWAYS assume orders are handled in-chat\n- Do not skip any order collection step\n.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        -512
+      ],
+      "id": "66e34d3b-7323-44b1-a7bd-ba38b4421dcc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -304
+      ],
+      "id": "a45ef273-8a6a-43bf-abe5-628dde06e677",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2BupvOF2gdHFHuWS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=={{ $json.message.chat.id }}\n",
+        "contextWindowLength": 50
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -208,
+        -304
+      ],
+      "id": "f2b1227b-25ad-4cb6-ae5c-099ea4aea9a1",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Use this tool to find all details for a single product, including its description, price, image URL, and current stock count. It requires the product's name or ID as the 'product_name_or_id' input.\n",
+        "documentId": {
+          "__rl": true,
+          "value": "11BLUrZBL3BbqkuMxTbOamSsKv-gjUssIClltM7YVq-c",
+          "mode": "list",
+          "cachedResultName": "product",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11BLUrZBL3BbqkuMxTbOamSsKv-gjUssIClltM7YVq-c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11BLUrZBL3BbqkuMxTbOamSsKv-gjUssIClltM7YVq-c/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -80,
+        -304
+      ],
+      "id": "e0276b10-5ccc-439a-9b79-bae8845a9d98",
+      "name": "Inventory",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Zf1KkI7d4ti9AGHc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Fetches a list of all current discounts and offers available.\n",
+        "documentId": {
+          "__rl": true,
+          "value": "1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM",
+          "mode": "list",
+          "cachedResultName": "ShoPilot",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        32,
+        -304
+      ],
+      "id": "9f4dbb19-c48c-4a93-bd07-293df7af341a",
+      "name": "Dis/Off",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Zf1KkI7d4ti9AGHc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Use this to answer general questions about shipping, returns, warranty, and store policies.\n",
+        "documentId": {
+          "__rl": true,
+          "value": "1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM",
+          "mode": "list",
+          "cachedResultName": "ShoPilot",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        160,
+        -304
+      ],
+      "id": "096cbfe1-8035-4826-8bd4-68bca10e5283",
+      "name": "FAQ",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Zf1KkI7d4ti9AGHc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3ec00167-bee8-435e-b8cc-3dbc9660a750",
+              "leftValue": "=={{ $json.output }}",
+              "rightValue": "|||",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        -512
+      ],
+      "id": "59a06cf3-0af5-4206-af38-8b1a8e2705ee",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const inputData = $input.item;\n\n  if (!inputData.json) {\n    throw new Error(\"The input from the If node did not contain the expected '.json' property.\");\n  }\n\n  const agentData = inputData.json;\n\n  const combinedString = agentData.block || agentData.text || agentData.output;\n\n  if (!combinedString) {\n    throw new Error(\"AI Agent output did not contain a 'block', 'text', or 'output' field.\");\n  }\n\n  const parts = combinedString.split('|||');\n\n  if (parts.length < 2) {\n    throw new Error(\"AI output was not in the expected 'message|||json' format.\");\n  }\n\n  const jsonString = parts[1];\n  const parsedData = JSON.parse(jsonString);\n\n  return parsedData;\n\n} catch (error) {\n  console.error(\"Failed to parse JSON:\", $input.item);\n  throw new Error(`Error in Code Node: ${error.message}`);\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -528
+      ],
+      "id": "9c0fda31-1dfc-4d8a-a1eb-c4ed8871eac4",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM",
+          "mode": "list",
+          "cachedResultName": "ShoPilot",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-hoWod6djzoaQkj6teb-iF-kmvKF8JL3TJ-q1VixHM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "product_name": "=={{ $json.product_name }}",
+            "quantity": "=={{ $json.quantity }}",
+            "date_of_order": "=={{ new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }}",
+            "customer_name": "=={{ $json.customer_name }}",
+            "customer_contactinfo": "=={{ $json.contact_number }}",
+            "shipping address": "=={{ $json.shipping_address }}",
+            "shipping_status": "=={{ $json.action }}",
+            "order _id": "==GGO-{{ $json.contact_number.slice(-10) }}-{{ new Date().toISOString().split('T')[0].replace(/-/g, '') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "quantity",
+              "displayName": "quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_of_order",
+              "displayName": "date_of_order",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_contactinfo",
+              "displayName": "customer_contactinfo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "shipping address",
+              "displayName": "shipping address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "shipping_status",
+              "displayName": "shipping_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "order _id",
+              "displayName": "order _id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        496,
+        -528
+      ],
+      "id": "5062e99e-eea0-4db5-8d9c-146041c92369",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Zf1KkI7d4ti9AGHc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}\n\n\n",
+        "text": "=={{ $('AI Agent').item.json.output }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        -528
+      ],
+      "id": "5225ede3-92ec-48db-9414-4ce095fba2ac",
+      "name": "Send a text message",
+      "webhookId": "148ff517-4ccf-4a79-9978-ae68e12b72aa",
+      "credentials": {
+        "telegramApi": {
+          "id": "HNuEZ3k3mVfq70hC",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=={{ $('Code in JavaScript').item.json.email_id }}\n",
+        "subject": "==Order Confirmation – (Order ID: {{ $('Append row in sheet').item.json['order _id'] }})\n",
+        "message": "=Hi {{ $('Code in JavaScript').item.json.customer_name }}! 👋\n\nGreat news! Your Shopilot order has been confirmed. We're now getting it ready for shipment. 🚀\n\n---\n📋 ORDER SUMMARY\n---\nOrder ID: {{ $('Append row in sheet').item.json['order _id'] }}\nProduct: {{ $('Code in JavaScript').item.json.quantity }}x {{ $('Code in JavaScript').item.json.product_name }}\n\n---\n🚚 SHIP TO\n---\n{{ $('Code in JavaScript').item.json.shipping_address }}\n---\n\nIf you have any questions, we're here to help! 😊\n\nThanks,  \nThe Shopilot Team\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        -528
+      ],
+      "id": "acaa368f-882c-40a8-a402-0950dab947f2",
+      "name": "Send a message",
+      "webhookId": "21430243-419d-4736-a112-cf7d37c1c078",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kFcceArae05QMJ2z",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -576,
+        -512
+      ],
+      "id": "5b39b13b-9e1c-4294-be98-215291ddf69d",
+      "name": "Telegram Trigger",
+      "webhookId": "58bac0d1-bca7-4661-ab75-774989eeb30e",
+      "credentials": {
+        "telegramApi": {
+          "id": "HNuEZ3k3mVfq70hC",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}\n\n\n\n\n",
+        "text": "=={{ $('AI Agent').item.json.output.replaceAll('<','&lt;').replaceAll('>','&gt;') }}\n\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        -304
+      ],
+      "id": "853d10b1-1cd9-47ce-a248-e633cf0fb0a3",
+      "name": "Send a text message1",
+      "webhookId": "148ff517-4ccf-4a79-9978-ae68e12b72aa",
+      "credentials": {
+        "telegramApi": {
+          "id": "HNuEZ3k3mVfq70hC",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dis/Off": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "1426c8a8-7126-48cb-bc14-cc64d71172f5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cc01a7de0d18a6250229d20466b066925638b4fdca6643581b799b8f8ee1e9eb"
+  },
+  "id": "xStEmjSQNis1mRdr",
+  "tags": []
+}

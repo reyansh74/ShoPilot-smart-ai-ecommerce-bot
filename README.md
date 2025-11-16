@@ -1,4 +1,4 @@
-<img width="1680" height="428" alt="Screenshot 2025-11-16 131738" src="https://github.com/user-attachments/assets/c89598bf-5d14-4690-a969-ed33a2e42da0" />🤖 Shopilot – Conversational E-commerce AI Agent
+
 
 A smart conversational shopping assistant built with **n8n** and **Google Gemini**, fully deployed on **Telegram**.  
 Shopilot automates the entire shopping journey — from browsing products to placing orders — with real-time updates and instant confirmations.
@@ -55,6 +55,7 @@ Collects quantity, customer name, shipping address, email, and phone number — 
 ---
 
 📈 Workflow Overview
+<img width="1680" height="428" alt="Screenshot 2025-11-16 131738" src="https://github.com/user-attachments/assets/c89598bf-5d14-4690-a969-ed33a2e42da0" />🤖 Shopilot – Conversational E-commerce AI Agent
 
 
 
